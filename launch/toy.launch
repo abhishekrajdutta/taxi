@@ -1,0 +1,34 @@
+<launch>
+
+  <arg name="paused" default="false"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+
+  
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <!--arg name="world_name" value="$(find ron_gazebo)/worlds/ron.world"/-->
+    <arg name="world_name" default="/home/abhishek/catkin_ws/src/taxi/worlds/square.xml"/>
+    <!-- <arg name="world_name" value="$(find ron_gazebo)/worlds/map1.world"/> -->
+    <arg name="debug" value="$(arg debug)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+  </include>
+
+  <!-- Load the URDF into the ROS Parameter Server -->
+  <param name="robot_description"
+	 command="$(find xacro)/xacro.py '$(find ron_description)/urdf/ron.xacro'" />
+
+  <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+	args="-urdf -model ron -param robot_description -y 4.0"/>
+  <!-- ros_control ron launch file -->
+  <include file="$(find ron_control)/launch/ron_control.launch" />
+
+  <include file="$(find usingjoy)/launch/joystick.launch" />
+
+
+</launch>
