@@ -6,6 +6,8 @@ from nav_msgs.msg import Odometry
 import numpy as np
 from kobuki_msgs.msg import BumperEvent
 from gazebo_msgs.msg import ModelState
+from rospy.numpy_msg import numpy_msg
+from std_msgs.msg import Float32
 
 
 class Scan_msg():
@@ -23,11 +25,14 @@ class Scan_msg():
 		# self.pub = rospy.Publisher('/ron/cmd_vel_mux',Twist,queue_size=10)
 		self.pub = rospy.Publisher('/cmd_vel_mux/input/navi',Twist,queue_size=10)
 		self.pub2 = rospy.Publisher("/gazebo/set_model_state",ModelState,queue_size=10);
+		self.pub3 = rospy.Publisher('floats', numpy_msg(Floats),queue_size=10)
 
 		self.move_cmd = Twist()
 		self.move_cmd.linear.x = 0.5
 		self.move_cmd.angular.z = 0
 		self.initState=ModelState()
+		self.outputs=np.array([self.rays,self.dist,self.move_cmd.linear.x,self.move_cmd.angular.z],dtype=np.float32)
+		rospy.Timer(rospy.Duration(1),self.loop)
 
 
 
@@ -63,15 +68,18 @@ class Scan_msg():
 		start=np.array([[0,4,0],[-4,0,0],[0,-4,0],[4,0,0]])
 		goals=np.array([[-4,0,0],[4,0,0],[0,4,0],[0,-4,0]])
 		self.initState.model_name = "mobile_base";
-  		self.initState.reference_frame = "world";
-	  	self.initState.pose.position.x = start[index][0]
-	  	self.initState.pose.position.y = start[index][1]
-	 	self.initState.pose.orientation.z=0;
-	 	self.initState.pose.orientation.w=0;
-	 	self.aim=[goals[index][0],goals[index][1]]
-  		self.pub2.publish(self.initState);
-  		self.move_cmd.linear.x = 0.5
+		self.initState.reference_frame = "world";
+		self.initState.pose.position.x = start[index][0]
+		self.initState.pose.position.y = start[index][1]
+		self.initState.pose.orientation.z=0;
+		self.initState.pose.orientation.w=0;
+		self.aim=[goals[index][0],goals[index][1]]
+		self.pub2.publish(self.initState);
+		self.move_cmd.linear.x = 0.5
 		self.move_cmd.angular.z = 0
+
+	def loop(self,event):
+		self.pub3.publish(self.outputs)
 
 
 
