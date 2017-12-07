@@ -8,6 +8,8 @@ from kobuki_msgs.msg import BumperEvent
 from gazebo_msgs.msg import ModelState
 from rospy.numpy_msg import numpy_msg
 from std_msgs.msg import Float32
+from rospy.numpy_msg import numpy_msg
+from taxi.msg import Floats
 
 
 class Scan_msg():
@@ -17,7 +19,7 @@ class Scan_msg():
 		self.rays = np.zeros(10);
 		self.dist = np.zeros(2);
 		self.aim = np.zeros(2);
-		
+		self.pause=0
 		self.sub = rospy.Subscriber('/ron/laser/scan', LaserScan, self.sort)
 		self.sub2=rospy.Subscriber('/odom',Odometry,self.odom_callback)
 		self.sub2=rospy.Subscriber("/mobile_base/events/bumper",BumperEvent,self.BumperEventCallback)
@@ -25,13 +27,14 @@ class Scan_msg():
 		# self.pub = rospy.Publisher('/ron/cmd_vel_mux',Twist,queue_size=10)
 		self.pub = rospy.Publisher('/cmd_vel_mux/input/navi',Twist,queue_size=10)
 		self.pub2 = rospy.Publisher("/gazebo/set_model_state",ModelState,queue_size=10);
-		self.pub3 = rospy.Publisher('floats', numpy_msg(Floats),queue_size=10)
+		self.pub3 = rospy.Publisher('state', Floats,queue_size=10)
 
 		self.move_cmd = Twist()
 		self.move_cmd.linear.x = 0.5
 		self.move_cmd.angular.z = 0
 		self.initState=ModelState()
-		self.outputs=np.array([self.rays,self.dist,self.move_cmd.linear.x,self.move_cmd.angular.z],dtype=np.float32)
+		# print np.siz
+		
 		rospy.Timer(rospy.Duration(1),self.loop)
 
 
@@ -39,7 +42,6 @@ class Scan_msg():
 		
 
 	def sort(self, laserscan):
-		index=0
 		# num = len(laserscan.ranges)
 		temp=np.array(laserscan.ranges)
 		where_is_nans=np.isnan(temp);
@@ -61,6 +63,9 @@ class Scan_msg():
 		self.move_cmd.linear.x = 0.0
 		self.move_cmd.angular.z = 0
 		rospy.loginfo("Im hit!")
+		self.pause=1;
+		self.move_cmd.linear.x = 0.5
+		self.move_cmd.angular.z = 0
 		self.resetPose();
 
 	def resetPose(self):
@@ -77,21 +82,27 @@ class Scan_msg():
 		self.pub2.publish(self.initState);
 		self.move_cmd.linear.x = 0.5
 		self.move_cmd.angular.z = 0
+		self.pause=0;
 
 	def loop(self,event):
-		self.pub3.publish(self.outputs)
+		if self.pause==0:
+			self.outputs=np.concatenate((self.rays,self.dist,np.array([self.move_cmd.linear.x,self.move_cmd.angular.z])))
+			self.pub3.publish(self.outputs)
+		# rospy.loginfo(self.outputs)
+		# rospy.loginfo("hrjh")
 
 
 
 def listener():
 	rospy.init_node('navigation_sensors')
 	rospy.loginfo("Subscriber Starting")
-	
+	Scan_msg()
 	rospy.spin()
 
 if __name__ == '__main__':
 	try:
-		Scan_msg()
 		listener()
+		
+		
 	except rospy.ROSInterruptException:
 		rospy.loginfo("exception")
