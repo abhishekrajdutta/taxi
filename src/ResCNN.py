@@ -21,55 +21,20 @@ class ResCNN(object):
     def __init__(self,norm):
         super(ResCNN, self).__init__()
         
-        self.content_layers = ['relu_4']
-        self.content_weight = 1
-        self.style_weight = 1000
-        self.loss_network = models.vgg16(pretrained=True)
+        # self.content_layers = ['relu_4']/
+        # self.content_weight = 1
+        # self.style_weight = 1000
+        # self.loss_network = models.vgg16(pretrained=True)
 
         
         
-        self.transform_network = nn.Sequential(#nn.ReflectionPad2d(8),
-                                               nn.Conv2d(3, 64, 9, stride=1, padding=4),
-                                               nn.InstanceNorm2d(64, affine=True),
+        self.actor_network = nn.Sequential(#nn.ReflectionPad2d(8),
+                                               nn.Linear(3, 512),
+                                               nn.InstanceNorm(512, affine=True),
                                                nn.ReLU(),
-                                               
-                                               nn.Conv2d(64, 64, 3, stride=1, padding=1),
-                                               nn.InstanceNorm2d(64, affine=True),
-                                               nn.ReLU(),
-                                               nn.Conv2d(64, 64, 3, stride=1, padding=1),
-                                               nn.InstanceNorm2d(64, affine=True),
-
-                                               nn.Conv2d(64, 64, 3, stride=1, padding=1),
-                                               nn.InstanceNorm2d(64, affine=True),
-                                               nn.ReLU(),
-                                               nn.Conv2d(64, 64, 3, stride=1, padding=1),
-                                               nn.InstanceNorm2d(64, affine=True),
-
-                                               nn.Conv2d(64, 64, 3, stride=1, padding=1),
-                                               nn.InstanceNorm2d(64, affine=True),
-                                               nn.ReLU(),
-                                               nn.Conv2d(64, 64, 3, stride=1, padding=1),
-                                               nn.InstanceNorm2d(64, affine=True),
-
-                                               nn.Conv2d(64, 64, 3, stride=1, padding=1),
-                                               nn.InstanceNorm2d(64, affine=True),
-                                               nn.ReLU(),
-                                               nn.Conv2d(64, 64, 3, stride=1, padding=1),
-                                               nn.InstanceNorm2d(64, affine=True),
 
                                                
-                                              
-                                               # UpsampleConvLayer(64, 64, kernel_size=3, stride=1, upsample=2),
-                                               # nn.InstanceNorm2d(64, affine=True),
-                                               # nn.ReLU(),
-
-                                               UpsampleConvLayer(64, 64, kernel_size=3, stride=1, upsample=2),
-                                               nn.InstanceNorm2d(64, affine=True),
-                                               nn.ReLU(),
-
-                                               UpsampleConvLayer(64, 64, kernel_size=3, stride=1, upsample=2),
-                                               nn.InstanceNorm2d(64, affine=True),
-                                               nn.ReLU(),
+                                               
                                                
                                                nn.Conv2d(64, 3, 9, stride=1, padding=4),
                                                nn.ReLU()
@@ -82,24 +47,9 @@ class ResCNN(object):
                   n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                   m.weight.data.normal_(0, math.sqrt(2. / n))
               elif isinstance(m, nn.InstanceNorm2d):
-                  m.weight.data.fill_(1)
+                  m.weight.data.fill_(1/8.0 )
                   m.bias.data.zero_()
-        elif norm==1:          
-              if isinstance(m, nn.Conv2d):
-                  n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                  m.weight.data.normal_(0, math.sqrt(2. / n))
-              elif isinstance(m, nn.InstanceNorm2d):
-                  m.weight.data.fill_(1/8.0)
-                  m.bias.data.zero_()
-
-        elif norm==2:          
-              if isinstance(m, nn.Conv2d):
-                  n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                  m.weight.data.normal_(0, math.sqrt(2. / n))
-              elif isinstance(m, nn.BatchNorm2d):
-                  m.weight.data.fill_(1/8.0)
-                  m.bias.data.zero_()
-
+ 
         self.loss = nn.MSELoss()
         self.use_cuda = torch.cuda.is_available()
         if self.use_cuda:
