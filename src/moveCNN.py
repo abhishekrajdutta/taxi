@@ -1,8 +1,8 @@
 import torch.optim as optim
 from torch.autograd import Variable
-from chainer import cuda, optimizers, serializers
-from chainer import Variable as vb
-import chainer.functions as F
+# from chainer import cuda, optimizers, serializers
+# from chainer import Variable as vb
+# import chainer.functions as F
 import math
 import numpy as np
 import torch
@@ -68,74 +68,6 @@ class criticNet(torch.nn.Module):
 		cy=self.ReLU(self.cinQ(self.clinQ(cy))).type(dtype)
 		return cy
 
-
-
-# class moveCNN(torch.nn.Module):
-# 	def __init__(self):
-# 		super(moveCNN, self).__init__()
-		
-# 		self.actions=torch.FloatTensor()
-# 		#actor network    	
-# 		self.alin1 = denseLayer(14, 512)
-# 		self.ain1 = torch.nn.InstanceNorm2d(512, affine=True)
-# 		self.alin2 = denseLayer(512, 512)
-# 		self.ain2 = torch.nn.InstanceNorm2d(512, affine=True)
-# 		self.alin3 = denseLayer(512, 512)        
-# 		self.ain3 = torch.nn.InstanceNorm2d(512, affine=True)
-
-# 		self.alinLinear = denseLayer(512, 1)
-# 		self.ainLinear = torch.nn.InstanceNorm2d(1, affine=True)
-# 		self.alinAngular = denseLayer(512, 1)
-# 		self.ain2Angular = torch.nn.InstanceNorm2d(1, affine=True)
-
-		
-# 		#critic network
-# 		self.clin1 = denseLayer(14, 512)
-# 		self.cin1 = torch.nn.InstanceNorm2d(512, affine=True)
-# 		self.clin2 = denseLayer(514, 512)
-# 		self.cin2 = torch.nn.InstanceNorm2d(512, affine=True)
-# 		self.clin3 = denseLayer(512, 512)
-# 		self.cin3 = torch.nn.InstanceNorm2d(512, affine=True)
-
-# 		self.clinQ = denseLayer(512, 1)
-# 		self.cinQ = torch.nn.InstanceNorm2d(1, affine=True)
-
-# 		self.Sigmoid=torch.nn.Sigmoid()
-# 		self.Tanh=torch.nn.Tanh()
-# 		self.ReLU = torch.nn.ReLU()
-		
-		
-
-# 	def actorForward(self, X):
-		
-
-# 		#Forward pass on actor network
-# 		ay=self.ReLU(self.ain1(self.alin1(X)))
-# 		ay=self.ReLU(self.ain2(self.alin2(ay)))
-# 		ay=self.ReLU(self.ain3(self.alin3(ay)))
-# 		ayLinear=self.Sigmoid(self.ainLinear(self.alinLinear(ay)))
-# 		ayAngular=self.Sigmoid(self.ainLinear(self.alinAngular(ay)))
-# 		self.actions=torch.cat((ayLinear,ayAngular),1)
-
-# 	def criticForward(self,X):
-# 		#Forward pass on critic network
-# 		cy=self.ReLU(self.cin1(self.clin1(X)))
-# 		cy=torch.cat((cy,self.actions),1)
-# 		cy=self.ReLU(self.cin2(self.clin2(cy)))
-# 		cy=self.ReLU(self.cin3(self.clin3(cy)))
-# 		self.Q=self.ReLU(self.cinQ(self.clinQ(cy))).type(dtype)
-
-# def train(self,states):
-# 	states=torch.unsqueeze(states, 0)
-# 	X = Variable(states.clone().cpu())
-# 	# self.actorForward(X)		
-# 	# self.criticForward(X)
-# 	actions=actor.forward(X)
-# 	Q=critic.forward(actions)
-
-# 	# print self.actions
-# 	# return self.actions
-# 	return Q, actions
 
 
 class denseLayer(torch.nn.Module):

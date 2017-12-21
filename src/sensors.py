@@ -24,6 +24,7 @@ class Scan_msg():
 		self.move_cmd = Twist()
 		self.move_cmd.linear.x = 0.5
 		self.move_cmd.angular.z = 0
+		self.overwrite=0
 		
 		self.sub = rospy.Subscriber('/ron/laser/scan', LaserScan, self.sort)
 		self.sub2=rospy.Subscriber('/odom',Odometry,self.odom_callback)
@@ -59,7 +60,7 @@ class Scan_msg():
 		distance=np.sqrt((msg.pose.pose.position.x-self.aim[0])**2+(msg.pose.pose.position.y-self.aim[1])**2)
 		angle=np.arctan2((msg.pose.pose.position.y-(self.aim[1])),(msg.pose.pose.position.x-(self.aim[0])))
 		self.dist=np.array([distance,angle])
-		# rospy.loginfo(self.aim)
+		# rospy.loginfo(self.dist)
 		# self.move()
 
 	def move(self):
@@ -73,6 +74,7 @@ class Scan_msg():
 		self.move_cmd.linear.x = 0.5
 		self.move_cmd.angular.z = 0
 		self.resetPose();
+		self.overwrite=1
 
 	def resetPose(self):
 		index=np.random.randint(4)
@@ -97,7 +99,11 @@ class Scan_msg():
 	def loop(self,event):
 		if self.pause==0:
 			self.outputs=np.concatenate((self.rays,self.dist))
+			if self.overwrite==1:
+				self.outputs[10]=1234
+				self.overwrite=0
 			self.pub3.publish(self.outputs)
+
 		# rospy.loginfo(self.outputs)
 		# rospy.loginfo("hrjh")
 
