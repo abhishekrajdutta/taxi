@@ -2,15 +2,13 @@ from collections import deque
 import random
 import numpy as np
 
-
 class ReplayBuffer(object):
 
-    def __init__(self, random_seed=123):
+    def __init__(self, buffer_size, random_seed=123):
         """
         The right side of the deque contains the most recent experiences 
         """
-        # self.buffer_size = buffer_size
-        self.buffer_size = 10
+        self.buffer_size = buffer_size
         self.count = 0
         self.buffer = deque()
         random.seed(random_seed)

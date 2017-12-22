@@ -48,6 +48,7 @@ class stateMsg():
 			# Q,actions=self.train(self.stateT)
 			states=torch.unsqueeze(self.stateT, 0)
 			X = Variable(states.clone().cpu())
+			print X
 			actions=actor.forward(X)
 			action=actions.data.numpy()
 			self.move_cmd.linear.x = action[0][0]

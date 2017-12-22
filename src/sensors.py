@@ -29,6 +29,7 @@ class Scan_msg():
 		self.sub = rospy.Subscriber('/ron/laser/scan', LaserScan, self.sort)
 		self.sub2=rospy.Subscriber('/odom',Odometry,self.odom_callback)
 		self.sub3=rospy.Subscriber("/mobile_base/events/bumper",BumperEvent,self.BumperEventCallback)
+		self.sub4=rospy.Subscriber('/resetSignal',Empty,self.resetPose)
 		# self.sub4 = rospy.Subscriber("/gazebo/set_model_state",ModelState,self.odom_callback);
 
 		# self.pub = rospy.Publisher('/ron/cmd_vel_mux',Twist,queue_size=10)
@@ -73,10 +74,10 @@ class Scan_msg():
 		self.pause=1;
 		self.move_cmd.linear.x = 0.5
 		self.move_cmd.angular.z = 0
-		self.resetPose();
+		# self.resetPose();
 		self.overwrite=1
 
-	def resetPose(self):
+	def resetPose(self,msg):
 		index=np.random.randint(4)
 		# start=np.array([[0,4,0],[-4,0,0],[0,-4,0],[4,0,0]])
 		goals=np.array([[2,2,0],[-3,2,0],[2,-2,0],[-3,-2,0]])
