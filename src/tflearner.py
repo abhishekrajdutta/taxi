@@ -64,17 +64,25 @@ class ActorNetwork(object):
 
 	def create_actor_network(self):
 		inputs = tflearn.input_data(shape=[None, self.s_dim])
-		net = tflearn.fully_connected(inputs, 400)
+		net = tflearn.fully_connected(inputs, 512)
 		net = tflearn.layers.normalization.batch_normalization(net)
 		net = tflearn.activations.relu(net)
-		net = tflearn.fully_connected(net, 300)
+		net = tflearn.fully_connected(net, 512)
+		net = tflearn.layers.normalization.batch_normalization(net)
+		net = tflearn.activations.relu(net)
+		net = tflearn.fully_connected(net, 512)
 		net = tflearn.layers.normalization.batch_normalization(net)
 		net = tflearn.activations.relu(net)
 		# Final layer weights are init to Uniform[-3e-3, 3e-3]
 		w_init = tflearn.initializations.uniform(minval=-0.003, maxval=0.003)
-		out = tflearn.fully_connected(
-			net, self.a_dim, activation='tanh', weights_init=w_init)
+		out1 = tflearn.fully_connected(
+			net, 1, activation='sigmoid', weights_init=w_init)
+
 		# Scale output to -action_bound to action_bound
+		out2 = tflearn.fully_connected(
+			net, 1, activation='tanh', weights_init=w_init)
+		# out=[out1,out2[]]
+		out=tflearn.layers.merge_ops.merge ([out1,out2], 'concat', axis=1, name='Merge')
 		scaled_out = tf.multiply(out, self.action_bound)
 		return inputs, out, scaled_out
 
@@ -150,20 +158,26 @@ class CriticNetwork(object):
 	def create_critic_network(self):
 		inputs = tflearn.input_data(shape=[None, self.s_dim])
 		action = tflearn.input_data(shape=[None, self.a_dim])
-		net = tflearn.fully_connected(inputs, 400)
+		net = tflearn.fully_connected(inputs, 512)
 		net = tflearn.layers.normalization.batch_normalization(net)
 		net = tflearn.activations.relu(net)
 
 		# Add the action tensor in the 2nd hidden layer
 		# Use two temp layers to get the corresponding weights and biases
-		t1 = tflearn.fully_connected(net, 300)
-		t2 = tflearn.fully_connected(action, 300)
+		t1 = tflearn.fully_connected(net, 512)
+		t2 = tflearn.fully_connected(action, 512)
 
 		net = tflearn.activation(
 			tf.matmul(net, t1.W) + tf.matmul(action, t2.W) + t2.b, activation='relu')
 
+		net = tflearn.fully_connected(net, 512)
+		net = tflearn.layers.normalization.batch_normalization(net)
+		net = tflearn.activations.relu(net)
+
 		# linear layer connected to 1 output representing Q(s,a)
 		# Weights are init to Uniform[-3e-3, 3e-3]
+
+
 		w_init = tflearn.initializations.uniform(minval=-0.003, maxval=0.003)
 		out = tflearn.fully_connected(net, 1, weights_init=w_init)
 		return inputs, action, out
@@ -267,7 +281,7 @@ class stateMsg():
 			self.state=np.array(msg.data)
 			self.state=np.concatenate((self.state,np.array([self.move_cmd.linear.x,self.move_cmd.angular.z])))
 			#put something here for received state
-			print "check"
+			# print "check"
 			self.received=1
 
 	def getstate(self,a):
@@ -300,13 +314,13 @@ class stateMsg():
 
 			# s = env.reset()
 			self.pub2.publish()
-
+			# print "reset called"
 			ep_reward = 0
 			ep_ave_max_q = 0
 
 			for j in range(self.episode_length):
 				if j==0:
-					print "first round"
+					# print "first round"
 					s,R=self.getstate([0,0])
 					continue
 
@@ -321,7 +335,7 @@ class stateMsg():
 				#perform action and wait for new state
 				# a=np.array([0.1,0])
 				a = actor.predict(np.reshape(s, (1, actor.s_dim))) + actor_noise()
-				print a[0]
+				# print a[0]
 				s2,R=self.getstate(a[0])
 
 				replay_buffer.add(np.reshape(s, (actor.s_dim,)), np.reshape(a, (actor.a_dim,)), R,
@@ -366,6 +380,7 @@ class stateMsg():
 
 				if self.terminal==1:
 					self.terminal=0
+					# print "terminal!!!!!!!!!"
 					# summary_str = sess.run(summary_ops, feed_dict={
 					#     summary_vars[0]: ep_reward,
 					#     summary_vars[1]: ep_ave_max_q / float(j)
@@ -380,15 +395,18 @@ class stateMsg():
 
 	def reward(self):
 		dist=self.state[10]
+		# print dist
 		ldist=self.lstate[10]
 		if dist<0.2:
 			R=10
 			self.terminal=1
 			self.num_episodes+=1
+			# print "terminal set"
 		elif dist==1234:
 			R=-100
 			self.terminal=1
 			self.num_episodes+=1
+			# print "terminal set"
 		else:
 			R=0.1*(ldist-dist)
 

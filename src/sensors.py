@@ -53,6 +53,8 @@ class Scan_msg():
 		temp=np.array(laserscan.ranges)
 		where_is_nans=np.isnan(temp);
 		temp[where_is_nans]=7;
+		where_is_infs=np.isinf(temp);
+		temp[where_is_infs]=0;
 		self.rays=temp[180:539:36] # 0 left 720 right	
 		# rospy.loginfo(self.rays)
 
@@ -70,7 +72,7 @@ class Scan_msg():
 	def BumperEventCallback(self,data):
 		self.move_cmd.linear.x = 0.0
 		self.move_cmd.angular.z = 0
-		rospy.loginfo("Im hit!")
+		# rospy.loginfo("Im hit!")
 		self.pause=1;
 		self.move_cmd.linear.x = 0.5
 		self.move_cmd.angular.z = 0
@@ -93,17 +95,19 @@ class Scan_msg():
 		self.aim=[goals[index][0],goals[index][1]] #brings everything to world frame
 		self.pub2.publish(self.initState);
 		self.pub4.publish()
-		self.move_cmd.linear.x = 0.5
-		self.move_cmd.angular.z = 0
+		# self.move_cmd.linear.x = 0.5
+		# self.move_cmd.angular.z = 0
+		self.overwrite=0;
 		self.pause=0;
 
 	def loop(self,event):
-		if self.pause==0:
-			self.outputs=np.concatenate((self.rays,self.dist))
-			if self.overwrite==1:
-				self.outputs[10]=1234
-				self.overwrite=0
-			self.pub3.publish(self.outputs)
+		self.outputs=np.concatenate((self.rays,self.dist))
+		if self.overwrite==1:
+			self.outputs[0]=0
+			self.outputs[10]=1234
+			# self.overwrite=0
+			# print "time to overwrite"
+		self.pub3.publish(self.outputs)
 
 		# rospy.loginfo(self.outputs)
 		# rospy.loginfo("hrjh")
