@@ -235,6 +235,7 @@ class OrnsteinUhlenbeckActionNoise:
 
 
 
+
 class stateMsg():
 
 	def __init__(self):
@@ -292,16 +293,28 @@ class stateMsg():
 		self.received=0
 		while(self.received==0):
 			pass
-		R=self.reward()		
+		R=self.reward()	
+		# print R	
 		return self.state,R
+
+	def build_summaries(self):
+	    episode_reward = tf.Variable(0.)
+	    tf.summary.scalar("Reward", episode_reward)
+	    episode_ave_max_q = tf.Variable(0.)
+	    tf.summary.scalar("Qmax_Value", episode_ave_max_q)
+
+	    summary_vars = [episode_reward, episode_ave_max_q]
+	    summary_ops = tf.summary.merge_all()
+
+	    return summary_ops, summary_vars
 	
 	def train(self,sess, actor, critic, actor_noise,buffer_size,minibatch_size):
 
 	# Set up summary Ops
-		# summary_ops, summary_vars = build_summaries()
+		summary_ops, summary_vars = self.build_summaries()
 
 		sess.run(tf.global_variables_initializer())
-		# writer = tf.summary.FileWriter(args['summary_dir'], sess.graph)
+		writer = tf.summary.FileWriter("./results", sess.graph)
 
 		# Initialize target network weights
 		actor.update_target_network()
@@ -322,6 +335,9 @@ class stateMsg():
 				if j==0:
 					# print "first round"
 					s,R=self.getstate([0,0])
+					R=0
+					self.lstate=s
+					print R
 					continue
 
 				# Added exploration noise
@@ -337,6 +353,7 @@ class stateMsg():
 				a = actor.predict(np.reshape(s, (1, actor.s_dim))) + actor_noise()
 				# print a[0]
 				s2,R=self.getstate(a[0])
+				print R
 
 				replay_buffer.add(np.reshape(s, (actor.s_dim,)), np.reshape(a, (actor.a_dim,)), R,
 								  self.terminal, np.reshape(s2, (actor.s_dim,)))
@@ -381,16 +398,16 @@ class stateMsg():
 				if self.terminal==1:
 					self.terminal=0
 					# print "terminal!!!!!!!!!"
-					# summary_str = sess.run(summary_ops, feed_dict={
-					#     summary_vars[0]: ep_reward,
-					#     summary_vars[1]: ep_ave_max_q / float(j)
-					# })
+					summary_str = sess.run(summary_ops, feed_dict={
+					    summary_vars[0]: ep_reward,
+					    summary_vars[1]: ep_ave_max_q / float(j)
+					})
 
-					# writer.add_summary(summary_str, i)
-					# writer.flush()
+					writer.add_summary(summary_str, i)
+					writer.flush()
 
-					# print('| Reward: {:d} | Episode: {:d} | Qmax: {:.4f}'.format(int(ep_reward), \
-					#         i, (ep_ave_max_q / float(j))))
+					print('| Reward: {:d} | Episode: {:d} | Qmax: {:.4f}'.format(int(ep_reward), \
+					        i, (ep_ave_max_q / float(j))))
 					break
 
 	def reward(self):
@@ -398,17 +415,18 @@ class stateMsg():
 		# print dist
 		ldist=self.lstate[10]
 		if dist<0.2:
-			R=10
+			R=10.0
 			self.terminal=1
 			self.num_episodes+=1
-			# print "terminal set"
+			# print "reached"
 		elif dist==1234:
-			R=-100
+			R=-100.0
 			self.terminal=1
 			self.num_episodes+=1
-			# print "terminal set"
+			# print "died"
 		else:
 			R=0.1*(ldist-dist)
+			# print "normal"
 
 		return R
 

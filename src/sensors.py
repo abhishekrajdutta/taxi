@@ -81,6 +81,7 @@ class Scan_msg():
 
 	def resetPose(self,msg):
 		index=np.random.randint(4)
+
 		# start=np.array([[0,4,0],[-4,0,0],[0,-4,0],[4,0,0]])
 		goals=np.array([[2,2,0],[-3,2,0],[2,-2,0],[-3,-2,0]])
 		self.initState.model_name = "mobile_base";
@@ -92,8 +93,14 @@ class Scan_msg():
 		z=np.random.uniform(0, 1)
 		self.initState.pose.orientation.z=z
 		self.initState.pose.orientation.w=np.sqrt(1-z**2);
-		self.aim=[goals[index][0],goals[index][1]] #brings everything to world frame
 		self.pub2.publish(self.initState);
+		self.aim=[goals[index][0],goals[index][1]] #brings everything to world frame
+		self.initState.model_name = "Lamp Post";
+		self.initState.reference_frame = "world";
+		self.initState.pose.position.x=self.aim[0];
+		self.initState.pose.position.y=self.aim[1];
+
+		# self.pub2.publish(self.initState);
 		self.pub4.publish()
 		# self.move_cmd.linear.x = 0.5
 		# self.move_cmd.angular.z = 0
